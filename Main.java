@@ -10,14 +10,13 @@ public class Main {
 
     private static boolean running = true;
 
-    private static Map<String, Integer> customVars = new HashMap<>();
+    private static final Map<String, Integer> customVars = new HashMap<>();
 
     static Pattern invalidCharPattern = Pattern.compile("[^-+=\\w\\s]");
 
-    static Pattern digitPattern = Pattern.compile("\\d");
+    static Pattern digitPattern = Pattern.compile("\\d+");
 
-    static Pattern varNamePattern = Pattern.compile("[a-zA-Z]");
-
+    static Pattern varNamePattern = Pattern.compile("[a-zA-Z]+");
 
     static Scanner scanner = new Scanner(System.in);
 
@@ -29,8 +28,7 @@ public class Main {
         }
     }
 
-    public static String formatCommand(String command) {
-        System.out.println("FORMATTER CALLED");
+    private static String formatCommand(String command) {
         command = command.replaceAll("\\s","");
         if (command.startsWith("-")) {
             command = "0+"+command;
@@ -42,12 +40,10 @@ public class Main {
         command = command.replaceAll("\\+", " + ");
         command = command.replaceAll("-"," - ");
         command = command.replaceAll("\\s+"," ");
-        System.out.println(command);
         return command;
     }
 
-    public static void performOperation(String[] splitCom) {
-        System.out.println("OPERATOR CALLED");
+    private static void performOperation(String[] splitCom) {
         for (int i = 0; i < splitCom.length; i++) {
             if(varIsName(splitCom[i]) && customVars.containsKey(splitCom[i])) {
                 splitCom[i] = ""+customVars.get(splitCom[i]);
@@ -64,24 +60,27 @@ public class Main {
         System.out.println(c);
     }
 
-    public static void assignVar(String[] splitCom) {
-        System.out.println("VAR ASSIGNER CALLED");
-        if (splitCom[2].equals("-")){
-            assignVarHelper(3, splitCom, true);
+    private static void assignVar(String[] splitCom) {
+        if (varIsName(splitCom[0])) {
+            if (splitCom[2].equals("-")){
+                assignVarHelper(3, splitCom, true);
+            } else {
+                assignVarHelper(2,splitCom, false);
+            }
         } else {
-            assignVarHelper(2,splitCom, false);
+            System.out.println("Invalid identifier");
         }
     }
 
-    public static boolean varIsDigit(String s) {
-        return digitPattern.matcher(s).find();
+    private static boolean varIsDigit(String s) {
+        return digitPattern.matcher(s).matches();
     }
 
-    public static boolean varIsName(String s) {
-        return varNamePattern.matcher(s).find();
+    private static boolean varIsName(String s) {
+        return varNamePattern.matcher(s).matches();
     }
 
-    public static void assignVarHelper (int i, String[] splitCom, boolean negative) {
+    private static void assignVarHelper (int i, String[] splitCom, boolean negative) {
         boolean varIsDigit = varIsDigit(splitCom[i]);
         boolean varIsName = varIsName(splitCom[i]);
         if (varIsDigit) {
@@ -97,8 +96,7 @@ public class Main {
         }
     }
 
-    public static void menu(String command) {
-        System.out.println("MENU CALLED");
+    private static void menu(String command) {
         if (command.equals("/exit")) {
             System.out.println("Bye!");
             running = false;
@@ -109,8 +107,7 @@ public class Main {
         }
     }
 
-    public static void executeCommand(String command) {
-        System.out.println("COMMAND EXECUTOR CALLED");
+    private static void executeCommand(String command) {
         String[] splitCom = command.split(" ");
         boolean invalidChar = invalidCharPattern.matcher(command).find();
         if (command.startsWith("/")) {
