@@ -97,33 +97,33 @@ public class Main {
             } else if (postfix.peekFirst().equals("+")) {
                 int a = Integer.parseInt(counter.pop());
                 int b = Integer.parseInt(counter.pop());
-                int c = a + b;
+                int c = b + a;
                 counter.push(""+c);
                 postfix.removeFirst();
             } else if (postfix.peekFirst().equals("-")) {
                 int a = Integer.parseInt(counter.pop());
                 int b = Integer.parseInt(counter.pop());
-                int c = a - b;
+                int c = b - a;
                 counter.push(""+c);
                 postfix.removeFirst();
             } else if (postfix.peekFirst().equals("*")) {
                 int a = Integer.parseInt(counter.pop());
                 int b = Integer.parseInt(counter.pop());
-                int c = a * b;
+                int c = b * a;
                 counter.push(""+c);
                 postfix.removeFirst();
             } else if (postfix.peekFirst().equals("/")) {
                 int a = Integer.parseInt(counter.pop());
                 int b = Integer.parseInt(counter.pop());
-                int c = a / b;
+                int c = b / a;
                 counter.push(""+c);
                 postfix.removeFirst();
             } else if (postfix.peekFirst().equals("^")) {
                 int a = Integer.parseInt(counter.pop());
                 int b = Integer.parseInt(counter.pop());
                 int c = 1;
-                for (int i = 0; i < b; i++){
-                    c = c*a;
+                for (int i = 0; i < a; i++){
+                    c = c*b;
                 }
                 counter.push(""+c);
                 postfix.removeFirst();
