@@ -14,6 +14,8 @@ public class Main {
 
     static Pattern invalidCharPattern = Pattern.compile("[^-+=\\w\\s]");
 
+    static Pattern invalidEndingPattern = Pattern.compile("[\\W]");
+
     static Pattern digitPattern = Pattern.compile("\\d+");
 
     static Pattern varNamePattern = Pattern.compile("[a-zA-Z]+");
@@ -61,15 +63,26 @@ public class Main {
     }
 
     private static void assignVar(String[] splitCom) {
-        if (varIsName(splitCom[0])) {
-            if (splitCom[2].equals("-")){
-                assignVarHelper(3, splitCom, true);
+        int equalCounter = 0;
+        for (int i = 0; i < splitCom.length; i++) {
+            if (splitCom[i].equals("=")) {
+                equalCounter++;
+            }
+        }
+        if (equalCounter < 2) {
+            if (varIsName(splitCom[0])) {
+                if (splitCom[2].equals("-")){
+                    assignVarHelper(3, splitCom, true);
+                } else {
+                    assignVarHelper(2,splitCom, false);
+                }
             } else {
-                assignVarHelper(2,splitCom, false);
+                System.out.println("Invalid identifier");
             }
         } else {
-            System.out.println("Invalid identifier");
+            throwInvalidAssignment();
         }
+
     }
 
     private static boolean varIsDigit(String s) {
@@ -92,8 +105,18 @@ public class Main {
         } else if (varIsName && customVars.containsKey(splitCom[i])) {
             customVars.put(splitCom[0], customVars.get(splitCom[i]));
         } else if (varIsName && !customVars.containsKey(splitCom[i])){
-            System.out.println("Unknown Variable");
+            throwUnknownVariable();
+        } else if (!varIsName) {
+            throwInvalidAssignment();
         }
+    }
+
+    private static void throwInvalidAssignment() {
+        System.out.println("Invalid assignment");
+    }
+
+    private static void throwUnknownVariable() {
+        System.out.println("Unknown variable");
     }
 
     private static void menu(String command) {
@@ -112,7 +135,7 @@ public class Main {
         boolean invalidChar = invalidCharPattern.matcher(command).find();
         if (command.startsWith("/")) {
             menu(command);
-        } else if (invalidChar) {
+        } else if (invalidChar || invalidEndingPattern.matcher(splitCom[splitCom.length-1]).find()) {
             System.out.println("Invalid Expression");
         } else if (command.contains("=")) {
             assignVar(splitCom);
@@ -120,6 +143,10 @@ public class Main {
             System.out.println(customVars.get(command));
         } else if (command.contains("+") || command.contains("-")){
             performOperation(splitCom);
-        } else {}
+        } else if (command.isBlank()) {
+
+        }else if (!customVars.containsKey(command)){
+            throwUnknownVariable();
+        }
     }
 }
