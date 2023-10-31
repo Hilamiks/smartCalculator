@@ -1,8 +1,6 @@
 package calculator;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class Main {
@@ -11,9 +9,11 @@ public class Main {
 
     private static final Map<String, Integer> customVars = new HashMap<>();
 
-    static Pattern invalidCharPattern = Pattern.compile("[^-+=\\w\\s]");
+    static Pattern invalidCharPattern = Pattern.compile("[^-+=/*^)(\\w\\s]");
 
-    static Pattern invalidEndingPattern = Pattern.compile("[\\W]");
+    static Pattern possibleOperandsPattern = Pattern.compile("[-+/*^)(]");
+
+    static Pattern invalidEndingPattern = Pattern.compile("[^)\\w]");
 
     static Pattern digitPattern = Pattern.compile("\\d+");
 
@@ -23,9 +23,8 @@ public class Main {
 
     public static void main(String[] args) {
         while (running) {
-            String command = scanner.nextLine();
-            command = formatCommand(command);
-            executeCommand(command);
+            String commandRaw = scanner.nextLine();
+            executeCommand(commandRaw);
         }
     }
 
@@ -36,15 +35,22 @@ public class Main {
         }
         command = command.replaceAll("--","+");
         command = command.replaceAll("[+]+","+");
+        command = command.replaceAll("[*]+","*");
+        command = command.replaceAll("/+","/");
         command = command.replaceAll("\\+-","-");
         command = command.replaceAll("=+"," = ");
         command = command.replaceAll("\\+", " + ");
         command = command.replaceAll("-"," - ");
+        command = command.replaceAll("[*]"," * ");
+        command = command.replaceAll("[/]"," / ");
+        command = command.replaceAll("\\^"," ^ ");
+        command = command.replaceAll("\\("," ( ");
+        command = command.replaceAll("\\)"," ) ");
         command = command.replaceAll("\\s+"," ");
         return command;
     }
 
-    private static void performOperation(String[] splitCom) {
+    private static void performOperationOld(String[] splitCom) {
         for (int i = 0; i < splitCom.length; i++) {
             if(varIsName(splitCom[i]) && customVars.containsKey(splitCom[i])) {
                 splitCom[i] = ""+customVars.get(splitCom[i]);
@@ -61,6 +67,118 @@ public class Main {
         System.out.println(c);
     }
 
+    private static void performOperation(String[] splitCom) {
+        //checks validity and replaces var names with values in one loop
+        int leftParCounter = 0;
+        int rightParCounter = 0;
+        for (int i = 0; i < splitCom.length; i++) {
+            if(varIsName(splitCom[i]) && customVars.containsKey(splitCom[i])) {
+                splitCom[i] = ""+customVars.get(splitCom[i]);
+            } else if (splitCom[i].equals("(")) {
+                leftParCounter++;
+            } else if (splitCom[i].equals(")")) {
+                rightParCounter++;
+            }
+        }
+        //starts counting if everything's ok
+        if (leftParCounter != rightParCounter) {
+            throwInvalidExpression();
+        } else {
+            Deque<String> postfix = createPostfix(splitCom);
+            count(postfix);
+        }
+    }
+
+    private static void count(Deque<String> postfix){
+        Deque<String> counter = new ArrayDeque<>();
+        while(!postfix.isEmpty()){
+            if (varIsDigit(postfix.peekFirst())) {
+                counter.push(postfix.pop());
+            } else if (postfix.peekFirst().equals("+")) {
+                int a = Integer.parseInt(counter.pop());
+                int b = Integer.parseInt(counter.pop());
+                int c = a + b;
+                counter.push(""+c);
+                postfix.removeFirst();
+            } else if (postfix.peekFirst().equals("-")) {
+                int a = Integer.parseInt(counter.pop());
+                int b = Integer.parseInt(counter.pop());
+                int c = a - b;
+                counter.push(""+c);
+                postfix.removeFirst();
+            } else if (postfix.peekFirst().equals("*")) {
+                int a = Integer.parseInt(counter.pop());
+                int b = Integer.parseInt(counter.pop());
+                int c = a * b;
+                counter.push(""+c);
+                postfix.removeFirst();
+            } else if (postfix.peekFirst().equals("/")) {
+                int a = Integer.parseInt(counter.pop());
+                int b = Integer.parseInt(counter.pop());
+                int c = a / b;
+                counter.push(""+c);
+                postfix.removeFirst();
+            } else if (postfix.peekFirst().equals("^")) {
+                int a = Integer.parseInt(counter.pop());
+                int b = Integer.parseInt(counter.pop());
+                int c = 1;
+                for (int i = 0; i < b; i++){
+                    c = c*a;
+                }
+                counter.push(""+c);
+                postfix.removeFirst();
+            }
+        }
+        System.out.println(counter.pop());
+    }
+    private static Deque<String> createPostfix(String[] splitCom) {
+        String[] splitComNew = new String[splitCom.length+2];
+        splitComNew[0] = "(";
+        for (int i = 1; i < splitComNew.length - 1; i++) {
+            splitComNew[i] = splitCom[i-1];
+        }
+        splitComNew[splitComNew.length-1] = ")";
+        splitCom = splitComNew;
+        Deque<String> postfixNotation = new ArrayDeque<>();
+        Deque<String> helper = new ArrayDeque<>();
+        for (int i = 0; i < splitCom.length; i++) {
+            if (varIsDigit(splitCom[i])) {
+                postfixNotation.addLast(splitCom[i]);
+            } else if (splitCom[i].equals("(")) {
+                helper.addLast(splitCom[i]);
+            } else if (splitCom[i].equals(")")) {
+                if (!helper.getLast().equals("(")) {
+                    postfixNotation.addLast(helper.getLast());
+                    helper.removeLast();
+                    i--;
+                } else {
+                    helper.removeLast();
+                }
+            }
+            else {
+                if (helper.isEmpty() || helper.peekLast().equals("(")) {
+                    helper.addLast(splitCom[i]);
+                } else if (getPriority(splitCom[i]) > getPriority(helper.peekLast())) {
+                    helper.addLast(splitCom[i]);
+                } else if ((getPriority(splitCom[i]) == getPriority(helper.peekLast()))
+                || (getPriority(splitCom[i]) < getPriority(helper.peekLast()))) {
+                    postfixNotation.addLast(helper.getLast());
+                    helper.removeLast();
+                    i--;
+                }
+            }
+        }
+        return postfixNotation;
+    }
+
+    private static int getPriority(String element) {
+        return switch (element) {
+            case "+", "-" -> 1;
+            case "*", "/" -> 2;
+            case "^" -> 3;
+            default -> 0;
+        };
+    }
     private static void assignVar(String[] splitCom) {
         int equalCounter = 0;
         for (int i = 0; i < splitCom.length; i++) {
@@ -118,29 +236,35 @@ public class Main {
         System.out.println("Unknown variable");
     }
 
+    private static void throwInvalidExpression() {
+        System.out.println("Invalid expression");
+    }
+
     private static void menu(String command) {
         if (command.equals("/exit")) {
             System.out.println("Bye!");
             running = false;
         } else if (command.equals("/help")) {
-            System.out.println("This calculator allows you to add or subtract whole numbers or custom variables (assigned with \"=\" sign)");
+            System.out.println("This calculator allows you to perform operations on whole numbers or custom variables (assigned with \"=\" sign)");
         } else {
             System.out.println("Unknown command");
         }
     }
 
-    private static void executeCommand(String command) {
+    private static void executeCommand(String commandRaw) {
+        String command = formatCommand(commandRaw);
         String[] splitCom = command.split(" ");
         boolean invalidChar = invalidCharPattern.matcher(command).find();
-        if (command.startsWith("/")) {
-            menu(command);
+        if (commandRaw.startsWith("/")) {
+            menu(commandRaw);
         } else if (invalidChar || invalidEndingPattern.matcher(splitCom[splitCom.length-1]).find()) {
-            System.out.println("Invalid Expression");
+            throwInvalidExpression();
         } else if (command.contains("=")) {
             assignVar(splitCom);
         } else if (customVars.containsKey(command)) {
             System.out.println(customVars.get(command));
-        } else if (command.contains("+") || command.contains("-")){
+        } else if (possibleOperandsPattern.matcher(command).find()){
+            //performOperationOld(splitCom);
             performOperation(splitCom);
         } else if (command.isBlank()) {
 
