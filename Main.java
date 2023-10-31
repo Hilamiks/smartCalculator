@@ -9,7 +9,7 @@ public class Main {
 
     private static final Map<String, Integer> customVars = new HashMap<>();
 
-    static Pattern invalidCharPattern = Pattern.compile("[^-+=/*^)(\\w\\s]");
+    static Pattern invalidCharPattern = Pattern.compile("[^-+=/*^)(\\w\\s]|[/*]{2,}");
 
     static Pattern possibleOperandsPattern = Pattern.compile("[-+/*^)(]");
 
@@ -35,8 +35,8 @@ public class Main {
         }
         command = command.replaceAll("--","+");
         command = command.replaceAll("[+]+","+");
-        command = command.replaceAll("[*]+","*");
-        command = command.replaceAll("/+","/");
+        //command = command.replaceAll("[*]+","*");
+        //command = command.replaceAll("/+","/");
         command = command.replaceAll("\\+-","-");
         command = command.replaceAll("=+"," = ");
         command = command.replaceAll("\\+", " + ");
@@ -48,23 +48,6 @@ public class Main {
         command = command.replaceAll("\\)"," ) ");
         command = command.replaceAll("\\s+"," ");
         return command;
-    }
-
-    private static void performOperationOld(String[] splitCom) {
-        for (int i = 0; i < splitCom.length; i++) {
-            if(varIsName(splitCom[i]) && customVars.containsKey(splitCom[i])) {
-                splitCom[i] = ""+customVars.get(splitCom[i]);
-            }
-        }
-        int c = Integer.parseInt(splitCom[0]);
-        for (int i = 1; i < splitCom.length; i++) {
-            if(splitCom[i].equals("+")) {
-                c += Integer.parseInt(splitCom[i+1]);
-            } else if (splitCom[i].equals("-")) {
-                c -= Integer.parseInt(splitCom[i+1]);
-            }
-        }
-        System.out.println(c);
     }
 
     private static void performOperation(String[] splitCom) {
@@ -80,6 +63,12 @@ public class Main {
                 rightParCounter++;
             }
         }
+        String newCom = "";
+        for (int i = 0; i < splitCom.length; i++) {
+            newCom = newCom+splitCom[i];
+        }
+        newCom = formatCommand(newCom);
+        splitCom = newCom.split(" ");
         //starts counting if everything's ok
         if (leftParCounter != rightParCounter) {
             throwInvalidExpression();
@@ -254,7 +243,8 @@ public class Main {
     private static void executeCommand(String commandRaw) {
         String command = formatCommand(commandRaw);
         String[] splitCom = command.split(" ");
-        boolean invalidChar = invalidCharPattern.matcher(command).find();
+        //System.out.println(command);
+        boolean invalidChar = invalidCharPattern.matcher(commandRaw).find();
         if (commandRaw.startsWith("/")) {
             menu(commandRaw);
         } else if (invalidChar || invalidEndingPattern.matcher(splitCom[splitCom.length-1]).find()) {
@@ -264,7 +254,6 @@ public class Main {
         } else if (customVars.containsKey(command)) {
             System.out.println(customVars.get(command));
         } else if (possibleOperandsPattern.matcher(command).find()){
-            //performOperationOld(splitCom);
             performOperation(splitCom);
         } else if (command.isBlank()) {
 
