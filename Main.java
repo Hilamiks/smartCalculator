@@ -1,5 +1,6 @@
 package calculator;
 
+import java.math.BigInteger;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -7,19 +8,19 @@ public class Main {
 
     private static boolean running = true;
 
-    private static final Map<String, Integer> customVars = new HashMap<>();
+    private static final Map<String, BigInteger> customVars = new HashMap<>();
 
-    static Pattern invalidCharPattern = Pattern.compile("[^-+=/*^)(\\w\\s]|[/*]{2,}");
+    private static final Pattern invalidCharPattern = Pattern.compile("[^-+=/*^)(\\w\\s]|[/*]{2,}");
 
-    static Pattern possibleOperandsPattern = Pattern.compile("[-+/*^)(]");
+    private static final Pattern possibleOperandsPattern = Pattern.compile("[-+/*^)(]");
 
-    static Pattern invalidEndingPattern = Pattern.compile("[^)\\w]");
+    private static final Pattern invalidEndingPattern = Pattern.compile("[^)\\w]");
 
-    static Pattern digitPattern = Pattern.compile("\\d+");
+    private static final Pattern digitPattern = Pattern.compile("\\d+");
 
-    static Pattern varNamePattern = Pattern.compile("[a-zA-Z]+");
+    private static final Pattern varNamePattern = Pattern.compile("[a-zA-Z]+");
 
-    static Scanner scanner = new Scanner(System.in);
+    private static final Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
         while (running) {
@@ -84,35 +85,35 @@ public class Main {
             if (varIsDigit(postfix.peekFirst())) {
                 counter.push(postfix.pop());
             } else if (postfix.peekFirst().equals("+")) {
-                int a = Integer.parseInt(counter.pop());
-                int b = Integer.parseInt(counter.pop());
-                int c = b + a;
+                BigInteger a = new BigInteger(counter.pop());
+                BigInteger b = new BigInteger(counter.pop());
+                BigInteger c = b.add(a);
                 counter.push(""+c);
                 postfix.removeFirst();
             } else if (postfix.peekFirst().equals("-")) {
-                int a = Integer.parseInt(counter.pop());
-                int b = Integer.parseInt(counter.pop());
-                int c = b - a;
+                BigInteger a = new BigInteger(counter.pop());
+                BigInteger b = new BigInteger(counter.pop());
+                BigInteger c = b.subtract(a);
                 counter.push(""+c);
                 postfix.removeFirst();
             } else if (postfix.peekFirst().equals("*")) {
-                int a = Integer.parseInt(counter.pop());
-                int b = Integer.parseInt(counter.pop());
-                int c = b * a;
+                BigInteger a = new BigInteger(counter.pop());
+                BigInteger b = new BigInteger(counter.pop());
+                BigInteger c = b.multiply(a);
                 counter.push(""+c);
                 postfix.removeFirst();
             } else if (postfix.peekFirst().equals("/")) {
-                int a = Integer.parseInt(counter.pop());
-                int b = Integer.parseInt(counter.pop());
-                int c = b / a;
+                BigInteger a = new BigInteger(counter.pop());
+                BigInteger b = new BigInteger(counter.pop());
+                BigInteger c = b.divide(a);
                 counter.push(""+c);
                 postfix.removeFirst();
             } else if (postfix.peekFirst().equals("^")) {
-                int a = Integer.parseInt(counter.pop());
-                int b = Integer.parseInt(counter.pop());
-                int c = 1;
-                for (int i = 0; i < a; i++){
-                    c = c*b;
+                BigInteger a = new BigInteger(counter.pop());
+                BigInteger b = new BigInteger(counter.pop());
+                BigInteger c = BigInteger.ONE;
+                for (BigInteger i = BigInteger.ZERO; a.compareTo(i) > 0; i = i.add(BigInteger.ONE)){
+                    c = c.multiply(b);
                 }
                 counter.push(""+c);
                 postfix.removeFirst();
@@ -120,6 +121,7 @@ public class Main {
         }
         System.out.println(counter.pop());
     }
+
     private static Deque<String> createPostfix(String[] splitCom) {
         String[] splitComNew = new String[splitCom.length+2];
         splitComNew[0] = "(";
@@ -168,6 +170,7 @@ public class Main {
             default -> 0;
         };
     }
+
     private static void assignVar(String[] splitCom) {
         int equalCounter = 0;
         for (int i = 0; i < splitCom.length; i++) {
@@ -204,9 +207,9 @@ public class Main {
         boolean varIsName = varIsName(splitCom[i]);
         if (varIsDigit) {
             if (negative) {
-                customVars.put(splitCom[0], -Integer.parseInt(splitCom[i]));
+                customVars.put(splitCom[0], new BigInteger(splitCom[i]).negate());
             } else {
-                customVars.put(splitCom[0], Integer.parseInt(splitCom[i]));
+                customVars.put(splitCom[0], new BigInteger(splitCom[i]));
             }
         } else if (varIsName && customVars.containsKey(splitCom[i])) {
             customVars.put(splitCom[0], customVars.get(splitCom[i]));
@@ -243,7 +246,6 @@ public class Main {
     private static void executeCommand(String commandRaw) {
         String command = formatCommand(commandRaw);
         String[] splitCom = command.split(" ");
-        //System.out.println(command);
         boolean invalidChar = invalidCharPattern.matcher(commandRaw).find();
         if (commandRaw.startsWith("/")) {
             menu(commandRaw);
